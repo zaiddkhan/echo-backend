@@ -3,23 +3,52 @@ package mongo
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"net/http"
 	"os"
+	"sync"
+	"time"
 )
 
-func ConnectDB() {
-	clientOptions := options.Client().ApplyURI(os.Getenv("MONGO_URI"))
-	_, err := mongo.Connect(context.TODO(), clientOptions)
+var (
+	clientInstance *mongo.Client
+	clientError    error
+	mongoOnce      sync.Once
+)
 
+func GetMongoClient() (*mongo.Client, error) {
+
+	mongoOnce.Do(func() {
+
+		clientOptions := options.Client().ApplyURI(os.Getenv("MONGO_URI"))
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		// Use the context created above
+		client, err := mongo.Connect(ctx, clientOptions)
+		if err != nil {
+			clientError = err
+			return
+		}
+		if err := client.Ping(ctx, readpref.Primary()); err != nil {
+			clientError = err
+			return
+		}
+		clientInstance = client
+	})
+
+	return clientInstance, clientError
+
+}
+
+func GetCollection(collectionName string) *mongo.Collection {
+	client, err := GetMongoClient()
 	if err != nil {
-		log.Fatal(err)
+		return nil
 	}
-	fmt.Println("Connected to MongoDB!")
-
+	return client.Database("echo").Collection(collectionName)
 }
 
 type ErrorResponse struct {
