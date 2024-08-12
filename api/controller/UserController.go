@@ -56,9 +56,16 @@ func (r *UserRepository) DeleteUser(ctx context.Context, id primitive.ObjectID) 
 
 }
 
-func (r *UserRepository) UpsertUser(ctx context.Context, user models.User) error {
-	opts := options.Replace().SetUpsert(true)
-	_, err := r.collection.ReplaceOne(ctx, bson.M{"_id": user.ID}, user, opts)
+func (r *UserRepository) CreateUser(ctx context.Context, user models.User) error {
+	_, err := r.collection.InsertOne(ctx, user)
+	return err
+
+}
+
+func (r *UserRepository) UpdateUser(ctx context.Context, user models.User) error {
+	filter := bson.M{"_id": user.ID}
+	update := bson.M{"$set": user}
+	_, err := r.collection.UpdateOne(ctx, filter, update)
 	return err
 }
 

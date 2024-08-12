@@ -4,31 +4,33 @@ import (
 	"Echo/api/controller"
 	"Echo/api/route"
 	"Echo/mongo"
-	"context"
+
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
-	"time"
+	"os"
 )
 
 func main() {
 
 	err := godotenv.Load()
+
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
-	client, err := mongo.GetMongoClient()
+	//_, err = firebase.FirebaseInit(context.Background())
+
+	if err != nil {
+		fmt.Printf("error connecting to firebase: %v", err)
+		os.Exit(1)
+	}
+	_, err = mongo.GetMongoClient()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := client.Disconnect(ctx); err != nil {
-		log.Fatal(err)
-	}
 	userRepo := controller.NewUserRepository(mongo.GetCollection("users"))
 	indexError := userRepo.CreateTtlIndex()
 	if indexError != nil {
