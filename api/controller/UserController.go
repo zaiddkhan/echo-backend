@@ -1,12 +1,14 @@
 package controller
 
 import (
+	mongo2 "Echo/mongo"
 	"Echo/mongo/models"
 	"context"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"time"
 )
 
 type UserRepository struct {
@@ -57,5 +59,15 @@ func (r *UserRepository) DeleteUser(ctx context.Context, id primitive.ObjectID) 
 func (r *UserRepository) UpsertUser(ctx context.Context, user models.User) error {
 	opts := options.Replace().SetUpsert(true)
 	_, err := r.collection.ReplaceOne(ctx, bson.M{"_id": user.ID}, user, opts)
+	return err
+}
+
+func (r *UserRepository) CreateTtlIndex() error {
+	collection := mongo2.GetCollection("users")
+	indexModel := mongo.IndexModel{
+		Keys:    bson.M{"timestamp": 1},
+		Options: options.Index().SetExpireAfterSeconds(int32(time.Hour * 24 * 21 / time.Second)),
+	}
+	_, err := collection.Indexes().CreateOne(context.Background(), indexModel)
 	return err
 }

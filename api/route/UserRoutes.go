@@ -23,7 +23,6 @@ func UserRoutes(router *gin.Engine, repo *controller.UserRepository) {
 		context.JSON(http.StatusOK, users)
 
 	})
-
 	userGroup.GET("/:id", func(ctx *gin.Context) {
 		idParam := ctx.Param("id")
 		id, err := primitive.ObjectIDFromHex(idParam)
@@ -44,7 +43,6 @@ func UserRoutes(router *gin.Engine, repo *controller.UserRepository) {
 		}
 		ctx.JSON(http.StatusOK, user)
 	})
-
 	userGroup.PUT("/:id", func(ctx *gin.Context) {
 		idParam := ctx.Param("id")
 		id, err := primitive.ObjectIDFromHex(idParam)
@@ -60,13 +58,13 @@ func UserRoutes(router *gin.Engine, repo *controller.UserRepository) {
 			return
 		}
 		user.ID = id
+
 		if err := repo.UpsertUser(context.Background(), user); err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		ctx.JSON(http.StatusOK, gin.H{"user": user})
 	})
-
 	userGroup.DELETE("/:id", func(ctx *gin.Context) {
 		idParam := ctx.Param("id")
 		id, err := primitive.ObjectIDFromHex(idParam)
@@ -87,4 +85,5 @@ func UserRoutes(router *gin.Engine, repo *controller.UserRepository) {
 		ctx.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
 
 	})
+
 }

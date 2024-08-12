@@ -5,6 +5,7 @@ import (
 	"Echo/api/route"
 	"Echo/mongo"
 	"context"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
@@ -29,7 +30,10 @@ func main() {
 		log.Fatal(err)
 	}
 	userRepo := controller.NewUserRepository(mongo.GetCollection("users"))
-
+	indexError := userRepo.CreateTtlIndex()
+	if indexError != nil {
+		fmt.Println(indexError)
+	}
 	router := gin.Default()
 	route.UserRoutes(router, userRepo)
 	if err := router.Run(":8080"); err != nil {
