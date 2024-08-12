@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func SchedulerRoutes(router *gin.Engine, repo *controller.SchedulerRepository) {
+func SchedulerRoutes(router *gin.Engine, repo *controller.SchedulerRepository, userRepo *controller.UserRepository) {
 	schedulerRoute := router.Group("/scheduler")
 	schedulerRoute.POST("/", func(ctx *gin.Context) {
 		var task models.Task
@@ -16,6 +16,6 @@ func SchedulerRoutes(router *gin.Engine, repo *controller.SchedulerRepository) {
 			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
 
-		repo.AddTask(context.Background(), &task)
+		repo.AddTask(context.Background(), &task, userRepo)
 	})
 }
