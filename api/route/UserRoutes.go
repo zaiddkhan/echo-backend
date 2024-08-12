@@ -118,4 +118,41 @@ func UserRoutes(router *gin.Engine, repo *controller.UserRepository) {
 
 	})
 
+	userGroup.PUT("/:id/token", func(ctx *gin.Context) {
+		idParam := ctx.Param("id")
+		id, err := primitive.ObjectIDFromHex(idParam)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+		var requestBody struct {
+			FirebaseToken string `json:"firebase_token" binding:"required"`
+		}
+		if err := ctx.ShouldBind(&requestBody); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
+			})
+		}
+		user, err := repo.FindUserByID(context.Background(), id)
+		if err != nil {
+			if err.Error() == "mongo: no documents in result" {
+				ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			} else {
+				ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			}
+		}
+		user.FirebaseToken = requestBody.FirebaseToken
+		user.Timestamp = time.Now()
+		if err := repo.UpdateUser(context.Background(), user); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "Firebase token updated successfully",
+			"user":    user,
+		})
+	})
+
 }
